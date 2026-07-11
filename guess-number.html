@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幸运猜数字</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #e8d5f5 0%, #d5e8f5 50%, #f5e8d5 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 48px 40px;
+            width: 420px;
+            max-width: 90vw;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: #2d3436;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #999;
+            font-size: 0.9rem;
+            margin-bottom: 28px;
+        }
+
+        .best-record {
+            font-size: 0.85rem;
+            color: #e17055;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .range-hint {
+            font-size: 0.88rem;
+            color: #00b894;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .guess-count {
+            font-size: 0.95rem;
+            color: #636e72;
+            margin-bottom: 20px;
+        }
+
+        .guess-count span {
+            font-weight: 700;
+            color: #6c5ce7;
+            font-size: 1.2rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #dfe6e9;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #6c5ce7;
+        }
+
+        button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            background: #6c5ce7;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background: #5a4bd1;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .feedback {
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            transition: opacity 0.3s;
+        }
+
+        .feedback.too-big {
+            color: #e74c3c;
+        }
+
+        .feedback.too-small {
+            color: #3498db;
+        }
+
+        .feedback.correct {
+            color: #27ae60;
+            font-size: 1.6rem;
+        }
+
+        .restart-btn {
+            display: none;
+            margin: 16px auto 0;
+            padding: 14px 36px;
+            background: #27ae60;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .restart-btn:hover {
+            background: #219a52;
+        }
+
+        .restart-btn:active {
+            transform: scale(0.97);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>幸运猜数字</h1>
+        <p class="subtitle">猜一个 1 ~ 100 之间的数字</p>
+        <p class="best-record" id="bestRecord">历史最少猜测次数：- 次</p>
+        <p class="range-hint" id="rangeHint">当前范围：1 - 100</p>
+        <p class="guess-count">第 <span id="count">0</span> 次猜测</p>
+        <div class="input-group">
+            <input type="number" id="input" min="1" max="100" placeholder="输入你的猜测">
+            <button id="guessBtn" onclick="handleGuess()">猜一猜</button>
+        </div>
+        <div class="feedback" id="feedback"></div>
+        <button class="restart-btn" id="restartBtn" onclick="restart()">重新开始</button>
+    </div>
+
+    <script>
+        let answer = Math.floor(Math.random() * 100) + 1;
+        let guessCount = 0;
+        let finished = false;
+        let rangeMin = 1;
+        let rangeMax = 100;
+
+        const BEST_KEY = 'guessNumberBest';
+        let bestRecord = parseInt(localStorage.getItem(BEST_KEY)) || 0;
+
+        const input = document.getElementById('input');
+        const countEl = document.getElementById('count');
+        const feedback = document.getElementById('feedback');
+        const guessBtn = document.getElementById('guessBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const bestRecordEl = document.getElementById('bestRecord');
+        const rangeHintEl = document.getElementById('rangeHint');
+
+        function updateBestRecordDisplay() {
+            bestRecordEl.textContent = bestRecord > 0
+                ? `历史最少猜测次数：${bestRecord} 次`
+                : '历史最少猜测次数：- 次';
+        }
+
+        function updateRangeDisplay() {
+            rangeHintEl.textContent = `当前范围：${rangeMin} - ${rangeMax}`;
+        }
+
+        updateBestRecordDisplay();
+
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') handleGuess();
+        });
+
+        function handleGuess() {
+            if (finished) return;
+
+            const val = parseInt(input.value);
+
+            if (isNaN(val)) {
+                feedback.textContent = '请输入一个整数';
+                feedback.className = 'feedback';
+                return;
+            }
+
+            if (val < rangeMin || val > rangeMax) {
+                feedback.textContent = `请输入范围内的数字（${rangeMin} ~ ${rangeMax}）`;
+                feedback.className = 'feedback';
+                return;
+            }
+
+            guessCount++;
+            countEl.textContent = guessCount;
+
+            if (val > answer) {
+                feedback.textContent = '太大了，再试一次';
+                feedback.className = 'feedback too-big';
+                rangeMax = val - 1;
+                updateRangeDisplay();
+            } else if (val < answer) {
+                feedback.textContent = '太小了，加油';
+                feedback.className = 'feedback too-small';
+                rangeMin = val + 1;
+                updateRangeDisplay();
+            } else {
+                feedback.textContent = '恭喜你！猜对了！';
+                feedback.className = 'feedback correct';
+                finished = true;
+                guessBtn.disabled = true;
+                input.disabled = true;
+                restartBtn.style.display = 'block';
+                if (bestRecord === 0 || guessCount < bestRecord) {
+                    bestRecord = guessCount;
+                    localStorage.setItem(BEST_KEY, bestRecord);
+                    updateBestRecordDisplay();
+                }
+            }
+
+            input.value = '';
+            input.focus();
+        }
+
+        function restart() {
+            answer = Math.floor(Math.random() * 100) + 1;
+            guessCount = 0;
+            finished = false;
+            rangeMin = 1;
+            rangeMax = 100;
+            countEl.textContent = '0';
+            feedback.textContent = '';
+            feedback.className = 'feedback';
+            input.value = '';
+            input.disabled = false;
+            input.focus();
+            guessBtn.disabled = false;
+            restartBtn.style.display = 'none';
+            updateRangeDisplay();
+        }
+    </script>
+</body>
+
+</html>

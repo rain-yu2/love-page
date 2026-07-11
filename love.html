@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>星空下的告白</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            /* 1. 核心改动：由中心向外扩散的蓝紫渐变 */
+            background: radial-gradient(circle at center, #2b1055 0%, #7597de 40%, #000000 100%);
+            overflow: hidden;
+            position: relative;
+            font-family: 'Arial', sans-serif;
+        }
+
+        /* --- 2. 表白文字样式 --- */
+        .love-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 5rem;
+            /* 字体大小 */
+            font-weight: bold;
+            text-align: center;
+            z-index: 100;
+            /* 确保文字在最上层 */
+
+            /* 文字发光特效 */
+            text-shadow:
+                0 0 10px #fff,
+                0 0 20px #ff00de,
+                0 0 30px #ff00de,
+                0 0 40px #ff00de;
+
+            /* 呼吸动画 */
+            animation: breathe 3s infinite ease-in-out;
+            pointer-events: none;
+            /* 让鼠标可以穿透文字点击背景 */
+        }
+
+        @keyframes breathe {
+
+            0%,
+            100% {
+                opacity: 0.8;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.05);
+                text-shadow: 0 0 20px #fff, 0 0 40px #ff00de;
+            }
+        }
+
+        /* --- 星星样式 --- */
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: twinkle linear infinite;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0.2;
+                transform: scale(0.8);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+                box-shadow: 0 0 5px white;
+            }
+
+            100% {
+                opacity: 0.2;
+                transform: scale(0.8);
+            }
+        }
+
+        /* --- 爱心样式 --- */
+        .heart {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #ff3366;
+            transform: rotate(-45deg);
+            animation: floatUp 5s linear infinite;
+            bottom: -50px;
+            opacity: 0.8;
+            z-index: 10;
+            /* 爱心在文字后面一点，更有层次感 */
+        }
+
+        .heart::before,
+        .heart::after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #ff3366;
+            border-radius: 50%;
+        }
+
+        .heart::before {
+            top: -10px;
+            left: 0;
+        }
+
+        .heart::after {
+            top: 0;
+            left: 10px;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) rotate(-45deg) scale(0.8);
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-110vh) rotate(-45deg) scale(1.2);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 表白文字区域 -->
+    <div class="love-text">
+        Love You<br>
+        <span style="font-size: 2rem; font-weight: normal; letter-spacing: 5px;">Forever & Always</span>
+    </div>
+
+    <script>
+        // 生成背景星星
+        function createStars() {
+            const starCount = 150; // 星星数量
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+
+                // 随机位置
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+
+                // 随机大小
+                const size = Math.random() * 3;
+
+                // 随机闪烁速度
+                const duration = Math.random() * 3 + 2;
+
+                star.style.left = `${x}vw`;
+                star.style.top = `${y}vh`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.animationDuration = `${duration}s`;
+
+                document.body.appendChild(star);
+            }
+        }
+
+        // 生成飘落爱心
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+
+            // 随机水平位置
+            heart.style.left = Math.random() * 100 + 'vw';
+
+            // 随机大小缩放
+            const scale = Math.random() * 0.6 + 0.5; // 0.5倍到1.1倍大小
+            heart.style.transform = `rotate(-45deg) scale(${scale})`;
+
+            // 随机飘动时间
+            const duration = Math.random() * 3 + 4; // 4到7秒
+            heart.style.animationDuration = duration + 's';
+
+            // 随机颜色微调 (可选，这里保持粉色系)
+            // heart.style.backgroundColor = `hsl(${Math.random() * 60 + 300}, 100%, 70%)`;
+
+            document.body.appendChild(heart);
+
+            // 动画结束后移除元素，防止页面卡顿
+            setTimeout(() => {
+                heart.remove();
+            }, duration * 1000);
+        }
+
+        // 初始化星星
+        createStars();
+
+        // 启动爱心雨 (每300毫秒生成一个)
+        setInterval(createHeart, 300);
+    </script>
+</body>
+
+</html>
